@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  backend:
+    build:
+      context: ./backend/src
+    networks:
+      - web_net
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./backend/csv-data:/backend/csv-data
+    mem_limit: 25g
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_BACKEND_HOST: "http://localhost:8000/api"
+    depends_on:
+      - backend
+    networks:
+      - web_net
+  db:
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+    image: "postgres:latest"
+    networks:
+      - web_net
+    volumes:
+      - ./backend/data:/var/lib/postgresql/data
+      - ./backend/csv-data:/var/lib/postgresql/csv-data
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+
+networks:
+  web_net:
+    driver: bridge
