@@ -1,0 +1,30 @@
+/* login.css */
+
+.login-container {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 50px;
+    font-family: sans-serif;
+    min-height: 100vh;
+    justify-content: center;
+    align-items: center; 
+  }
+  
+  .login-form input {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px 20px;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  .login-link {
+    color: #ddd;
+    text-decoration: none;
+  }
+  
+  .login-link:hover {
+    text-decoration: underline;
+  }
