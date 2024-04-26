@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from typing import List, Annotated
 import enum
 
-from models import User, Recomendation, Reviews, Business, UserResponse, BusinessResponse, RecomendationResponse, ReviewsResponse
+from models import User, Recommendation, Reviews, Business, UserResponse, BusinessResponse, RecommendationResponse, ReviewsResponse
 app = FastAPI()
 origins = [
     "http://localhost",
@@ -87,6 +87,61 @@ def get_user(user_id: int, db: db_dependency):
     return user
 
 
+@app.get('/recommendations/{user_id}', response_model=List[models.RecommendationResponse])
+def get_recommendations(user_id: str, db: db_dependency):
+    recommendations = db.query(models.Recommendation).filter(models.Recommendation.user_id == user_id).all()
+    return recommendations
+
+
+@app.get('/recommendations/', response_model=List[models.RecommendationResponse])
+def get_recommendations(db: db_dependency):
+    recommendations = db.query(models.Recommendation).all()
+    return recommendations
+
+@app.get('/businesses/', response_model=List[models.BusinessResponse])
+def get_businesses(db: db_dependency):
+    businesses = db.query(models.Business).all()
+    return businesses
+
+@app.get('/businesses/{business_id}', response_model=models.BusinessResponse)
+def get_business(business_id: str, db: db_dependency):
+    business = db.query(models.Business).filter(models.Business.business_id == business_id).first()
+    if business is None:
+        raise HTTPException(status_code=404, detail='Business not found')
+    return business
+
+@app.get('/reviews/', response_model=List[models.ReviewsResponse])
+def get_reviews(db: db_dependency):
+    reviews = db.query(models.Reviews).all()
+    return reviews
+
+@app.get('/reviews/{review_id}', response_model=models.ReviewsResponse)
+def get_review(review_id: int, db: db_dependency):
+    review = db.query(models.Reviews).filter(models.Reviews.review_id == review_id).first()
+    if review is None:
+        raise HTTPException(status_code=404, detail='Review not found')
+    return review
+
+@app.get('/reviews/user/{user_id}', response_model=List[ReviewsResponse])
+def get_reviews_by_user(user_id: str, db: db_dependency):
+    reviews = db.query(models.Reviews).filter(models.Reviews.user_id == user_id).all()
+    if not reviews:
+        raise HTTPException(status_code=404, detail='No reviews found for this user')
+    return reviews
+
+@app.get('/reviews/business/{business_id}', response_model=List[ReviewsResponse])
+def get_reviews_by_business(business_id: str, db: db_dependency):
+    reviews = db.query(models.Reviews).filter(models.Reviews.business_id == business_id).all()
+    if not reviews:
+        raise HTTPException(status_code=404, detail='No reviews found for this business')
+    return reviews
+
+@app.get('/reviews/user/{user_id}/business/{business_id}', response_model=List[ReviewsResponse])
+def get_reviews_by_user_and_business(user_id: str, business_id: str, db: db_dependency):
+    reviews = db.query(models.Reviews).filter(models.Reviews.user_id == user_id, models.Reviews.business_id == business_id).all()
+    if not reviews:
+        raise HTTPException(status_code=404, detail='No reviews found for this user and business combination')
+    return reviews
 
 
 

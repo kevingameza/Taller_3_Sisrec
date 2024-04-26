@@ -28,14 +28,13 @@ class Business(Base):
 
 
 
-class Recomendation(Base):
-    __tablename__= 'recomendations'
+class Recommendation(Base):
+    __tablename__= 'recommendations'
     
     recommendation_id = Column(String, primary_key=True, index=True)
     user_id = Column(String, ForeignKey('users.user_id'))
     business_id = Column(String, ForeignKey('business.business_id'))
-    stars = Column(Float)
-    neighbors = Column(ARRAY(String), nullable=True) 
+    stars = Column(Float, index=True)
     
 
 class Reviews(Base):
@@ -55,19 +54,19 @@ class UserResponse(BaseModel):
 class BusinessResponse(BaseModel):
     business_id: str
     name: str
-    address: str
+    address: Optional[str]  # Allow None values
     stars: float
     postal_code: int
-    latitude: float
-    longitude: float
+    latitude: Optional[float]  # Allow None values
+    longitude: Optional[float]
 
 
-class RecomendationResponse(BaseModel):
-    id: int
+
+class RecommendationResponse(BaseModel):
+    recommendation_id: int
     user_id: str
     business_id: str
     stars: float
-    neighbors: Optional[List[str]] = None
     
     
 class ReviewsResponse(BaseModel):
