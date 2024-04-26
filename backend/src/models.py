@@ -10,73 +10,70 @@ from typing import List, Optional  # Importar List y Optional para el nuevo camp
 class User(Base):
     __tablename__= 'users'
     
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
+    user_id = Column(String, primary_key=True, index=True)
     password = Column(String)
-    country = Column(String, nullable=True)
+    name = Column(String, nullable=True)
     
     
-class Item(Base):
-    __tablename__= 'songs'
+class Business(Base):
+    __tablename__= 'business'
     
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True)
-    artist = Column(String, nullable=True)
-    
+    business_id = Column(String, primary_key=True, index=True)
+    name = Column(String, index=True)
+    address = Column(String, nullable=True)
+    stars = Column(Float, index=True)
+    postal_code = Column(Integer, index=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
-class RecomendationStatus(enum.Enum):
-    positive = 'positive'
-    negative = 'negative'
-    undefined = 'undefined'
-  
+
 
 class Recomendation(Base):
     __tablename__= 'recomendations'
     
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    item_id = Column(Integer, ForeignKey('songs.id'))
-    pred = Column(Float)
+    recommendation_id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey('users.user_id'))
+    business_id = Column(String, ForeignKey('business.business_id'))
+    stars = Column(Float)
     neighbors = Column(ARRAY(String), nullable=True) 
-    status = Column(Enum(RecomendationStatus), nullable=True)
     
-    
-class Interactions(Base):
-    __tablename__= 'interactions'
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    item_id = Column(Integer, ForeignKey('songs.id'))
-    rating = Column(Float)
-    
+
+class Reviews(Base):
+    __tablename__= 'reviews'
+
+    review_id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey('users.user_id'))
+    business_id = Column(String, ForeignKey('business.business_id'))
+    stars = Column(Float)
+    text = Column(String, nullable=True)
+    date = Column(String, nullable=True)
+
 class UserResponse(BaseModel):
-    id: int
-    username: str
-    country: Optional[str]
+    user_id: str
+    name: str
     
-class ItemResponse(BaseModel):
-    id: int
-    title: str
-    artist: Optional[str]
-    
+class BusinessResponse(BaseModel):
+    business_id: str
+    name: str
+    address: str
+    stars: float
+    postal_code: int
+    latitude: float
+    longitude: float
+
+
 class RecomendationResponse(BaseModel):
     id: int
-    user_id: int
-    item_id: int
-    pred: float
-    status: RecomendationStatus
+    user_id: str
+    business_id: str
+    stars: float
     neighbors: Optional[List[str]] = None
     
-class RecomendationUpdate(BaseModel):
-    status: RecomendationStatus
-
     
-class InteractionsResponse(BaseModel):
-    id: int
-    user_id: int
-    item_id: int
-    rating: float
-    
-    
-class RecommendationUpdate(BaseModel):
-    status: RecomendationStatus
+class ReviewsResponse(BaseModel):
+    review_id: str
+    user_id: str
+    business_id: str
+    stars: float
+    text: str
+    date: str

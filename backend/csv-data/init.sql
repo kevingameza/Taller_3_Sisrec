@@ -1,9 +1,6 @@
-TRUNCATE TABLE users, songs, interactions, recomendations RESTART IDENTITY CASCADE;
-COPY users (id, username, password, country) FROM '/var/lib/postgresql/csv-data/unique_users.csv' DELIMITER ';' CSV HEADER QUOTE '"' ESCAPE '\';
-COPY songs (id, title, artist) FROM '/var/lib/postgresql/csv-data/unique_songs.csv' DELIMITER ';' CSV HEADER QUOTE '"' ESCAPE '\';
-COPY interactions (user_id, item_id, rating) FROM '/var/lib/postgresql/csv-data/interaction.csv' DELIMITER ';' CSV HEADER QUOTE '"' ESCAPE '\';
-COPY recomendations (user_id, item_id, pred, status) FROM '/var/lib/postgresql/csv-data/recommendations.csv' DELIMITER ';' CSV HEADER QUOTE '"' ESCAPE '\';
-SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
-SELECT setval('songs_id_seq', (SELECT MAX(id) FROM songs));
-SELECT setval('interactions_id_seq', (SELECT MAX(id) FROM interactions));
-SELECT setval('recomendations_id_seq', (SELECT MAX(id) FROM recomendations));
+TRUNCATE TABLE users, business, reviews, recomendations RESTART IDENTITY CASCADE;
+COPY users (user_id, name, password) FROM '/var/lib/postgresql/csv-data/users.csv' DELIMITER ',' CSV HEADER QUOTE '"' ESCAPE '\';
+COPY business (business_id, name, address, stars, postal_code, latitude, longitude) FROM '/var/lib/postgresql/csv-data/business_selected.csv' DELIMITER ',' CSV HEADER QUOTE '"' ESCAPE '\';
+COPY reviews (review_id, user_id, business_id, starts, text, date) FROM '/var/lib/postgresql/csv-data/df_review.csv' DELIMITER ',' CSV HEADER QUOTE '"' ESCAPE '\';
+COPY recomendations (user_id, business_id, starts) FROM '/var/lib/postgresql/csv-data/predicciones_promedio.csv' DELIMITER ',' CSV HEADER QUOTE '"' ESCAPE '\';
+
