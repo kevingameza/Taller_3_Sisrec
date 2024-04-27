@@ -1,5 +1,5 @@
 .home-view {
-    background-color: #333;
+    background-color: #F7F7F7;
     color: #fff;
     padding: 50px;
     font-family: sans-serif;
@@ -17,11 +17,14 @@
   }
   
   .place-card {
-    background-color: #222;
+    background-color: #525151;
     border-radius: 5px;
     padding: 10px;
-    text-align: left;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  }
+
+  .place-link {
+    text-align: right;
   }
   
   .place-card img {

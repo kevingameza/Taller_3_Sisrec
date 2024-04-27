@@ -1,6 +1,6 @@
 // Login.js
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import "../App.css";
 
@@ -16,9 +16,9 @@ function Login() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username,
-          country: 'Colombia',
+          user_id: username,
           password: username,
+          name: username,
         }),
       });
 
@@ -29,7 +29,7 @@ function Login() {
       const data = await response.json();
 
       // Save user ID in local storage
-      localStorage.setItem("userId", data.id);
+      localStorage.setItem("userId", data.user_id);
 
       navigate("/home");
     } catch (error) {
@@ -45,7 +45,7 @@ function Login() {
         alt="Yelp Logo"
         className="logo"
       />
-      <h2>Login</h2>
+      <h2 style={{color: "black"}}>Login</h2>
       <form onSubmit={handleSubmit} className="login-form">
         <input
           type="user"
@@ -58,12 +58,6 @@ function Login() {
           Login
         </button>
       </form>
-      {/* <p>
-        Don't have an account?{" "}
-        <Link to="/register" className="login-link">
-          Register
-        </Link>
-      </p> */}
     </div>
   );
 }
