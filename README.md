@@ -15,7 +15,7 @@ Fill db
 docker-compose exec db psql -U postgres -d postgres -f /var/lib/postgresql/csv-data/init.sql
 ```
 
-User id - user name
+Usuarios de prueba - user name 
 
 ```
 jSs2q7mM_L9ZdBxgJ_gV7g
@@ -23,7 +23,7 @@ jSs2q7mM_L9ZdBxgJ_gV7g
 
 
 ```
-_MGFLJAEjlcYRXJYTHjnsQ,
+viWkK6--5ChiN3hlZ8XqTg
 ```
 
 
