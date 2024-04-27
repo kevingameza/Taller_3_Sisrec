@@ -1,19 +1,5 @@
 version: '3.8'
 services:
-  backend:
-    build:
-      context: ./backend/src
-    networks:
-      - web_net
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-    volumes:
-      - ./backend/csv-data:/backend/csv-data
-    mem_limit: 25g
-
-
 
   db:
     environment:
@@ -30,6 +16,31 @@ services:
       - "5432:5432"
     expose:
       - "5432"
+
+  backend:
+    build:
+      context: ./backend/src
+    networks:
+      - web_net
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./backend/csv-data:/backend/csv-data
+    mem_limit: 25g
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_BACKEND_HOST: "http://localhost:8000/api"
+    depends_on:
+      - backend
+    networks:
+      - web_net
 
 networks:
   web_net:
