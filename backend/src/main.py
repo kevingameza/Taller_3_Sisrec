@@ -8,7 +8,7 @@ import uvicorn
 from pydantic import BaseModel
 from typing import List, Annotated
 import enum
-
+from recomendation_system import get_recommendation, get_top_n_recommendations
 from models import User, Recommendation, Reviews, Business, UserResponse, BusinessResponse, RecommendationResponse, ReviewsResponse
 app = FastAPI()
 origins = [
@@ -80,7 +80,7 @@ def get_users(db: db_dependency):
     return users
 
 @app.get('/users/{user_id}', response_model=models.UserResponse)
-def get_user(user_id: int, db: db_dependency):
+def get_user(user_id: str, db: db_dependency):
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail='User not found')
@@ -143,9 +143,24 @@ def get_reviews_by_user_and_business(user_id: str, business_id: str, db: db_depe
         raise HTTPException(status_code=404, detail='No reviews found for this user and business combination')
     return reviews
 
+@app.get('/generate_recommendation/{user_id}/{business_id}', response_model=RecommendationResponse)
+def generate_recommendation(user_id: str, business_id: str, db: db_dependency):
+    recommendation = get_recommendation(user_id, business_id)
+    db_recommendation = models.Recommendation(user_id=user_id, business_id=business_id, stars=recommendation)
+    db.add(db_recommendation)
+    db.commit()
+    db.refresh(db_recommendation)
+    return db_recommendation
 
-
-
+@app.get('/generate_top_n_recommendations/{user_id}', response_model=List[RecommendationResponse])
+def generate_top_n_recommendations(user_id: str, db: db_dependency):
+    recommendations = get_top_n_recommendations(user_id)
+    db_recommendations = [models.Recommendation(user_id=recommendation.user_id,
+                                                business_id=recommendation.business_id,
+                                                stars=recommendation.stars) for recommendation in recommendations]
+    db.add_all(db_recommendations)
+    db.commit()
+    return db_recommendations
 
 if __name__ == '__main__':
     uvicorn.run(app, host='0.0.0.0', port=8000)

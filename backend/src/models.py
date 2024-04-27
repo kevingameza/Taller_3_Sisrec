@@ -31,7 +31,7 @@ class Business(Base):
 class Recommendation(Base):
     __tablename__= 'recommendations'
     
-    recommendation_id = Column(String, primary_key=True, index=True)
+    recommendation_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(String, ForeignKey('users.user_id'))
     business_id = Column(String, ForeignKey('business.business_id'))
     stars = Column(Float, index=True)

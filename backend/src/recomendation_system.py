@@ -1,59 +1,45 @@
 from sqlalchemy.orm import Session
-from models import Interactions, Item
 from joblib import load
-from surprise import KNNBasic
-from surprise import Dataset, Reader
+from surprise import Dataset, Reader, accuracy, Prediction
+from surprise.model_selection import train_test_split
 import pandas as pd
 
-modelo = load('pearson.joblib')
+modelo_knn = load('modelo_knnbasic.joblib')
+modelo_svd = load('modelo_svd.joblib')
 
-def get_neighbors(k):
-    neighbors_dict = {}
-    for user_id_inner in modelo.trainset.all_users():
-        neighbors_inner_ids = modelo.get_neighbors(user_id_inner, k)
-        user_id_raw = modelo.trainset.to_raw_uid(user_id_inner)
-        neighbors_raw_ids = [modelo.trainset.to_raw_uid(inner_id) for inner_id in neighbors_inner_ids]
-        neighbors_dict[user_id_raw] = neighbors_raw_ids
-
-    return neighbors_dict
-
-def get_neighbors(user_id, k=10):
-    df = pd.read_csv('/backend/csv-data/data.csv')
-    print(user_id)
-    reader = Reader(rating_scale=(1, 5))
-    data = Dataset.load_from_df(df[['userid', 'traname', 'frecuencia']], reader)
-    trainset = data.build_full_trainset()
-    if not modelo.trainset:
-        modelo.fit(trainset)
-    inner_uid = trainset.to_inner_uid(user_id)
-    neighbors = modelo.get_neighbors(inner_uid, k=k)
-    neighbors_ids = [trainset.to_raw_uid(inner_id) for inner_id in neighbors]
-    return neighbors_ids
+reader = Reader(rating_scale=(1, 5))
+df_review = pd.read_csv('/backend/csv-data/df_review.csv')
+surprise_dataset = Dataset.load_from_df(df_review[['user_id', 'business_id', 'stars']], reader)
+trainset = surprise_dataset.build_full_trainset()
 
 
+class RecommendationResponse:
+    def __init__(self, user_id, business_id, stars):
+        self.user_id = user_id
+        self.business_id = business_id
+        self.stars = stars
 
-def get_song_recommendations(mainstream_preferences):
+def get_recommendation(user_id:str, business_id:str):
     print('--------------------------------')
-    df = pd.read_csv('/backend/csv-data/data.csv')
-    df = df[['userid', 'traname', 'frecuencia']]
-    new_user_prefs = pd.DataFrame(mainstream_preferences)
+    predicciones_svd = modelo_svd.predict(user_id, business_id)
+    predicciones_knn = modelo_knn.predict(user_id, business_id)
+    promedio_est = (predicciones_svd.est + predicciones_knn.est) / 2
 
-    reader = Reader(rating_scale=(1, 5))  # Ajusta esto según tu escala de calificación
-    updated_df = pd.concat([df, new_user_prefs]).reset_index(drop=True)
+    return promedio_est
 
-    # Carga el conjunto de datos actualizado
-    data_updated = Dataset.load_from_df(updated_df[['userid', 'traname', 'frecuencia']], reader)
-    trainset_updated = data_updated.build_full_trainset()
+def get_top_n_recommendations(user_id: str, n: int = 10):
+    print('--------------------------------')
 
+    unique_businesses = df_review['business_id'].unique()
     predictions = []
 
-    for item_inner_id in trainset_updated.all_items():
-        item_raw_id = trainset_updated.to_raw_iid(item_inner_id)
+    for business_id in unique_businesses:
+        pred_svd = modelo_svd.predict(user_id, business_id)
+        pred_knn = modelo_knn.predict(user_id, business_id)
+        avg_rating = (pred_svd.est + pred_knn.est) / 2
+        predictions.append((business_id, avg_rating))
 
-        if item_raw_id not in new_user_prefs:
-            prediction = modelo.predict(uid=None, iid=item_raw_id, r_ui=None, verbose=False)
-            predictions.append((item_raw_id, prediction.est))
     predictions.sort(key=lambda x: x[1], reverse=True)
+    top_n_predictions = predictions[:n]
 
-    return predictions[:10]
-
+    return [RecommendationResponse(user_id, business_id, stars) for business_id, stars in top_n_predictions]
