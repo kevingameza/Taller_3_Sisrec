@@ -5,8 +5,6 @@ from pydantic import BaseModel
 from sqlalchemy import ARRAY
 from typing import List, Optional  # Importar List y Optional para el nuevo campo
 
-
-
 class User(Base):
     __tablename__= 'users'
     
@@ -43,7 +41,7 @@ class Ratings(Base):
     rating = Column(Float)
 
 class Tags(Base):
-    __tablename__= 'tags'
+    __tablename__ = 'tags'
 
     tag_id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.user_id'))
@@ -56,12 +54,10 @@ class UserResponse(BaseModel):
     
 class MoviesResponse(BaseModel):
     movies_id: int
-    title = str
-    stars = str
-    directors = str
-    genres = str
-
-
+    title: str
+    stars: str
+    directors: str
+    genres: str
 
 class RecommendationResponse(BaseModel):
     recommendation_id: int
@@ -69,16 +65,14 @@ class RecommendationResponse(BaseModel):
     movie_id: str
     stars: float
     
-    
 class RatingsResponse(BaseModel):
-    rating_id = int
-    user_id = int
-    movie_id = int
-    rating = float
+    rating_id: int
+    user_id: int
+    movie_id: int
+    rating: float
 
-
-class RatingsResponse(BaseModel):
-    tag_id = int
-    user_id = int
-    movie_id = int
-    tag = str
+class TagsResponse(BaseModel):
+    tag_id: int
+    user_id: int
+    movie_id: int
+    tag: str
