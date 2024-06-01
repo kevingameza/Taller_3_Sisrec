@@ -10,21 +10,18 @@ from typing import List, Optional  # Importar List y Optional para el nuevo camp
 class User(Base):
     __tablename__= 'users'
     
-    user_id = Column(String, primary_key=True, index=True)
+    user_id = Column(Integer, primary_key=True, index=True)
     password = Column(String)
-    name = Column(String, nullable=True)
     
     
-class Business(Base):
-    __tablename__= 'business'
+class Movies(Base):
+    __tablename__= 'movies'
     
-    business_id = Column(String, primary_key=True, index=True)
-    name = Column(String, index=True)
-    address = Column(String, nullable=True)
-    stars = Column(Float, index=True)
-    postal_code = Column(Integer, index=True)
-    latitude = Column(Float, nullable=True)
-    longitude = Column(Float, nullable=True)
+    movie_id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    stars = Column(String, nullable=True)
+    directors = Column(String, index=True)
+    genres = Column(String, index=True)
 
 
 
@@ -32,47 +29,56 @@ class Recommendation(Base):
     __tablename__= 'recommendations'
     
     recommendation_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    user_id = Column(String, ForeignKey('users.user_id'))
-    business_id = Column(String, ForeignKey('business.business_id'))
+    user_id = Column(Integer, ForeignKey('users.user_id'))
+    movie_id = Column(Integer, ForeignKey('movies.movie_id'))
     stars = Column(Float, index=True)
     
 
-class Reviews(Base):
-    __tablename__= 'reviews'
+class Ratings(Base):
+    __tablename__= 'ratings'
 
-    review_id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey('users.user_id'))
-    business_id = Column(String, ForeignKey('business.business_id'))
-    stars = Column(Float)
-    text = Column(String, nullable=True)
-    date = Column(String, nullable=True)
+    rating_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'))
+    movie_id = Column(Integer, ForeignKey('movies.movie_id'))
+    rating = Column(Float)
+
+class Tags(Base):
+    __tablename__= 'tags'
+
+    tag_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.user_id'))
+    movie_id = Column(Integer, ForeignKey('movies.movie_id'))
+    tag = Column(String)
 
 class UserResponse(BaseModel):
     user_id: str
     name: str
     
-class BusinessResponse(BaseModel):
-    business_id: str
-    name: str
-    address: Optional[str]  # Allow None values
-    stars: float
-    postal_code: int
-    latitude: Optional[float]  # Allow None values
-    longitude: Optional[float]
+class MoviesResponse(BaseModel):
+    movies_id: int
+    title = str
+    stars = str
+    directors = str
+    genres = str
 
 
 
 class RecommendationResponse(BaseModel):
     recommendation_id: int
     user_id: str
-    business_id: str
+    movie_id: str
     stars: float
     
     
-class ReviewsResponse(BaseModel):
-    review_id: str
-    user_id: str
-    business_id: str
-    stars: float
-    text: str
-    date: str
+class RatingsResponse(BaseModel):
+    rating_id = int
+    user_id = int
+    movie_id = int
+    rating = float
+
+
+class RatingsResponse(BaseModel):
+    tag_id = int
+    user_id = int
+    movie_id = int
+    tag = str
