@@ -22,7 +22,6 @@ class Movies(Base):
     genres = Column(String, index=True)
 
 
-
 class Recommendation(Base):
     __tablename__= 'recommendations'
     

@@ -9,7 +9,9 @@ from pydantic import BaseModel
 from typing import List, Annotated
 import enum
 from recomendation_system import get_recommendation, get_top_n_recommendations
-# from models import User, Recommendation, Reviews, Business, UserResponse, BusinessResponse, RecommendationResponse, ReviewsResponse
+from models import User, Recommendation, Ratings, Movies, Tags, UserResponse, MoviesResponse, RecommendationResponse, RatingsResponse, TagsResponse
+
+
 app = FastAPI()
 origins = [
     "http://localhost",
@@ -42,99 +44,121 @@ def read_root():
     return {'message': 'Hello World'}
 
 
-# class User(BaseModel):
-#     user_id: str
-#     password: str
-#     name: str
+@app.post('/signup/', response_model=UserResponse)
+def signup(user: User, db: db_dependency):
+    existing_user = db.query(models.User).filter(models.User.user_id == user.user_id).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    db_user = models.User(user_id=user.user_id, password=user.password)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return UserResponse(user_id=db_user.user_id)
 
 
-# @app.post('/signup/', response_model=UserResponse)
-# def signup(user: User, db: db_dependency):
-#     existing_user = db.query(models.User).filter(models.User.user_id == user.user_id).first()
-#     if existing_user:
-#         raise HTTPException(status_code=400, detail="Username already exists")
+@app.post('/login/', response_model=models.UserResponse)
+def login(user: User, db: db_dependency):
+    db_user = db.query(models.User).filter(models.User.user_id == user.user_id).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail='User not found')
+    if db_user.password != user.password:
+        raise HTTPException(status_code=401, detail='Invalid password')
+    return db_user
 
-#     db_user = models.User(user_id=user.user_id, password=user.password, name=user.name)
-#     db.add(db_user)
-#     db.commit()
-#     db.refresh(db_user)
-#     return UserResponse(user_id=db_user.user_id, name=db_user.name)
+@app.get('/logout/')
+def logout():
+    return {'message': 'Logged out'}
 
+@app.get('/users/', response_model=List[models.UserResponse])
+def get_users(db: db_dependency):
+    users = db.query(models.User).all()
+    return users
 
-# @app.post('/login/', response_model=models.UserResponse)
-# def login(user: User, db: db_dependency):
-#     db_user = db.query(models.User).filter(models.User.user_id == user.user_id).first()
-#     if db_user is None:
-#         raise HTTPException(status_code=404, detail='User not found')
-#     if db_user.password != user.password:
-#         raise HTTPException(status_code=401, detail='Invalid password')
-#     return db_user
-
-# @app.get('/logout/')
-# def logout():
-#     return {'message': 'Logged out'}
-
-# @app.get('/users/', response_model=List[models.UserResponse])
-# def get_users(db: db_dependency):
-#     users = db.query(models.User).all()
-#     return users
-
-# @app.get('/users/{user_id}', response_model=models.UserResponse)
-# def get_user(user_id: str, db: db_dependency):
-#     user = db.query(models.User).filter(models.User.user_id == user_id).first()
-#     if user is None:
-#         raise HTTPException(status_code=404, detail='User not found')
-#     return user
+@app.get('/users/{user_id}', response_model=models.UserResponse)
+def get_user(user_id: str, db: db_dependency):
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail='User not found')
+    return user
 
 
-# @app.get('/recommendations/{user_id}', response_model=List[models.RecommendationResponse])
-# def get_recommendations(user_id: str, db: db_dependency):
-#     recommendations = db.query(models.Recommendation).filter(models.Recommendation.user_id == user_id).all()
-#     return recommendations
+@app.get('/recommendations/{user_id}', response_model=List[models.RecommendationResponse])
+def get_recommendations(user_id: str, db: db_dependency):
+    recommendations = db.query(models.Recommendation).filter(models.Recommendation.user_id == user_id).all()
+    return recommendations
 
 
-# @app.get('/recommendations/', response_model=List[models.RecommendationResponse])
-# def get_recommendations(db: db_dependency):
-#     recommendations = db.query(models.Recommendation).all()
-#     return recommendations
+@app.get('/recommendations/', response_model=List[models.RecommendationResponse])
+def get_recommendations(db: db_dependency):
+    recommendations = db.query(models.Recommendation).all()
+    return recommendations
 
-# @app.get('/businesses/', response_model=List[models.BusinessResponse])
-# def get_businesses(db: db_dependency):
-#     businesses = db.query(models.Business).all()
-#     return businesses
+@app.get('/movies/', response_model=List[models.MoviesResponse])
+def get_movies(db: db_dependency):
+    movies = db.query(models.Movies).all()
+    return movies
 
-# @app.get('/businesses/{business_id}', response_model=models.BusinessResponse)
-# def get_business(business_id: str, db: db_dependency):
-#     business = db.query(models.Business).filter(models.Business.business_id == business_id).first()
-#     if business is None:
-#         raise HTTPException(status_code=404, detail='Business not found')
-#     return business
+@app.get('/movies/{movies_id}', response_model=models.MoviesResponse)
+def movies(movie_id: str, db: db_dependency):
+    movie = db.query(models.Business).filter(models.Movies.movie_id == movie_id).first()
+    if movie is None:
+        raise HTTPException(status_code=404, detail='Movie not found')
+    return movie
 
-# @app.get('/reviews/', response_model=List[models.ReviewsResponse])
-# def get_reviews(db: db_dependency):
-#     reviews = db.query(models.Reviews).all()
-#     return reviews
+@app.get('/ratings/', response_model=List[models.RatingsResponse])
+def get_ratings(db: db_dependency):
+    ratings = db.query(models.Ratings).all()
+    return ratings
 
-# @app.get('/reviews/{review_id}', response_model=models.ReviewsResponse)
-# def get_review(review_id: int, db: db_dependency):
-#     review = db.query(models.Reviews).filter(models.Reviews.review_id == review_id).first()
-#     if review is None:
-#         raise HTTPException(status_code=404, detail='Review not found')
-#     return review
+@app.get('/ratings/{rating_id}', response_model=models.RatingsResponse)
+def get_rating(rating_id: int, db: db_dependency):
+    rating = db.query(models.Ratings).filter(models.Ratings.rating_id == rating_id).first()
+    if rating is None:
+        raise HTTPException(status_code=404, detail='Rating not found')
+    return rating
 
-# @app.get('/reviews/user/{user_id}', response_model=List[ReviewsResponse])
-# def get_reviews_by_user(user_id: str, db: db_dependency):
-#     reviews = db.query(models.Reviews).filter(models.Reviews.user_id == user_id).all()
-#     if not reviews:
-#         raise HTTPException(status_code=404, detail='No reviews found for this user')
-#     return reviews
 
-# @app.get('/reviews/business/{business_id}', response_model=List[ReviewsResponse])
-# def get_reviews_by_business(business_id: str, db: db_dependency):
-#     reviews = db.query(models.Reviews).filter(models.Reviews.business_id == business_id).all()
-#     if not reviews:
-#         raise HTTPException(status_code=404, detail='No reviews found for this business')
-#     return reviews
+@app.get('/tags/', response_model=List[models.TagsResponse])
+def get_tags(db: db_dependency):
+    tags = db.query(models.Tags).all()
+    return tags
+
+@app.get('/tags/{tag_id}', response_model=models.RatingsResponse)
+def get_tags(tag_id: int, db: db_dependency):
+    tag = db.query(models.Tags).filter(models.Tags.tag_id == tag_id).first()
+    if tag is None:
+        raise HTTPException(status_code=404, detail='Rating not found')
+    return tag
+
+@app.get('/ratings/user/{user_id}', response_model=List[RatingsResponse])
+def get_ratings_by_user(user_id: str, db: db_dependency):
+    ratings = db.query(models.Ratings).filter(models.Ratings.user_id == user_id).all()
+    if not ratings:
+        raise HTTPException(status_code=404, detail='No ratings found for this user')
+    return ratings
+
+@app.get('/ratings/movies/{movie_id}', response_model=List[RatingsResponse])
+def get_ratings_by_movie(movie_id: str, db: db_dependency):
+    ratings = db.query(models.Ratings).filter(models.Ratings.movie_id == movie_id).all()
+    if not ratings:
+        raise HTTPException(status_code=404, detail='No ratings found for this business')
+    return ratings
+
+
+@app.get('/tags/user/{user_id}', response_model=List[TagsResponse])
+def get_tags_by_user(user_id: str, db: db_dependency):
+    tags = db.query(models.Tags).filter(models.Tags.user_id == user_id).all()
+    if not tags:
+        raise HTTPException(status_code=404, detail='No tags found for this user')
+    return tags
+
+@app.get('/tags/movies/{movie_id}', response_model=List[TagsResponse])
+def get_taghsby_movie(movie_id: str, db: db_dependency):
+    tags = db.query(models.Tags).filter(models.Tags.movie_id == movie_id).all()
+    if not tags:
+        raise HTTPException(status_code=404, detail='No tags found for this business')
+    return tags
 
 # @app.get('/reviews/user/{user_id}/business/{business_id}', response_model=List[ReviewsResponse])
 # def get_reviews_by_user_and_business(user_id: str, business_id: str, db: db_dependency):
