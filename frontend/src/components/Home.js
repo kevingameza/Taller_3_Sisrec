@@ -4,7 +4,7 @@ import "./Home.css";
 import "../App.css";
 
 function Home() {
-  const [recommendedPlaces, setRecommendedPlaces] = useState(null);
+  const [recommendedMovies, setRecommendedMovies] = useState(null);
   const userId = localStorage.getItem("userId"); // Get user ID from local storage
 
   useEffect(() => {
@@ -29,19 +29,19 @@ function Home() {
             recommendations = await response.json();
           }
           // Fetch additional information for each song
-          const placesWithDetails = await Promise.all(
+          const moviesWithDetails = await Promise.all(
             recommendations.map(async (recomendation) => {
-              const placesResponse = await fetch(
-                `http://127.0.0.1:8000/businesses/${recomendation.business_id}`
+              const moviesResponse = await fetch(
+                `http://127.0.0.1:8000/movies/${recomendation.movie_id}`
               );
-              if (!placesResponse.ok) {
-                throw new Error("Failed to fetch place details");
+              if (!moviesResponse.ok) {
+                throw new Error("Failed to fetch movie details");
               }
-              const placeDetails = await placesResponse.json();
+              const placeDetails = await moviesResponse.json();
               return { ...recomendation, title: placeDetails.name }; // Combine the recommendation and detailed information
             })
           );
-          setRecommendedPlaces(placesWithDetails); // Aquí es donde deberíamos usar la variable correcta
+          setRecommendedMovies(moviesWithDetails); // Aquí es donde deberíamos usar la variable correcta
         } catch (error) {
           console.error("Error fetching recommendations:", error);
           // Handle errors (display an error message to the user)
@@ -52,28 +52,31 @@ function Home() {
     }
   }, [userId]); // Re-run useEffect when userId changes
 
-  if (!recommendedPlaces) {
+  if (!recommendedMovies) {
     return <div className="detail-view">Loading...</div>;
   }
 
   return (
     <div className="home-view">
       <img
-        src="https://fineproxy.org/wp-content/uploads/2023/09/Yelp-for-Business-logo.png"
-        alt="Yelp Logo"
+        src="https://seeklogo.com/images/I/imdb-logo-1CD1CCD432-seeklogo.com.png"
+        alt="Imdb Logo"
         className="logo"
       />
-      <h1>Recommended Businesses</h1>
-      <div className="place-grid">
-        {recommendedPlaces.map((place) => (
-          <div className="place-card">
-            <h3>{place.title}</h3>
+      <h1>Recommended Movies</h1>
+      <div className="movie-grid">
+        {recommendedMovies.map((movie) => (
+          <div className="movie-card">
+            <h3>{movie.title}</h3>
+
             <Link
-              to={`/places/${place.business_id}`}
-              key={place.business_id}
-              className="place-link"
+              to={`/movies/${movie.movie_id}`}
+              key={movie.movie_id}
+              className="movie-link"
             >
-              See more
+              <button type="submit" className="btn">
+                See More
+              </button>
             </Link>
           </div>
         ))}

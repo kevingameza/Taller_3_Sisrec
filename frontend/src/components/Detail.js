@@ -3,13 +3,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams } from "react-router-dom"; // Importar useParams
 
 import { faThumbsUp, faThumbsDown } from "@fortawesome/free-solid-svg-icons"; // Import specific icons
-import MapComponent from "./Map";
 
 import "./Detail.css"; // Import your styling
 import "../App.css";
 
 function Detail(props) {
-  const [place, setPlace] = useState(null);
+  const [movie, setPlace] = useState(null);
   const [selectedRating, setSelectedRating] = useState(null); // Track selected rating
   const { placeId } = useParams();
 
@@ -17,10 +16,10 @@ function Detail(props) {
     const fetchRecommendations = async () => {
       try {
         const placeResponse = await fetch(
-          `http://127.0.0.1:8000/businesses/${placeId}`
+          `http://127.0.0.1:8000/movies/${placeId}`
         );
         if (!placeResponse.ok) {
-          throw new Error("Failed to fetch place details");
+          throw new Error("Failed to fetch movie details");
         }
         const placeDetails = await placeResponse.json();
         setPlace(placeDetails); // Aquí es donde deberíamos usar la variable correcta
@@ -36,11 +35,11 @@ function Detail(props) {
   const handleRateSong = async (rating) => {
     setSelectedRating(rating === selectedRating ? null : rating); // Toggle rating
 
-    if (!place || !place.id) {
+    if (!movie || !movie.id) {
       console.error(
-        "Missing place data or ID to update recommendation status."
+        "Missing movie data or ID to update recommendation status."
       );
-      return; // Prevent sending request without place information
+      return; // Prevent sending request without movie information
     }
 
     if (rating === null) {
@@ -49,7 +48,7 @@ function Detail(props) {
     }
 
     const response = await fetch(
-      `http://127.0.0.1:8000/recommendations/${place.id}`,
+      `http://127.0.0.1:8000/recommendations/${movie.id}`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -61,31 +60,31 @@ function Detail(props) {
 
     if (!response.ok) {
       console.error(
-        `Error updating recommendation status for song ${place.id}:`,
+        `Error updating recommendation status for song ${movie.id}:`,
         await response.text()
       );
     } else {
-      console.log(`Recommendation status updated for place ${place.id}`);
-      // Optionally, update the place state locally if successful
-      // setplace({ ...place, status: rating }); // Update place status in state
+      console.log(`Recommendation status updated for movie ${movie.id}`);
+      // Optionally, update the movie state locally if successful
+      // setplace({ ...movie, status: rating }); // Update movie status in state
     }
   };
 
-  if (!place) {
+  if (!movie) {
     return <div className="detail-view">Loading...</div>;
   }
 
   return (
     <div className="detail-view">
       <img
-        src="https://fineproxy.org/wp-content/uploads/2023/09/Yelp-for-Business-logo.png"
-        alt="Yelp Logo"
+        src="https://seeklogo.com/images/I/imdb-logo-1CD1CCD432-seeklogo.com.png"
+        alt="Imdb Logo"
         className="logo"
       />
       <div className="info-container">
-        <h1>{place.name}</h1>
-        <h2>{place.address}</h2>
-        <h3>Expected rating: {place.stars}</h3>
+        <h1>{movie.name}</h1>
+        <h2>{movie.address}</h2>
+        <h3>Expected rating: {movie.stars}</h3>
 
         {/* Rating Widget */}
         <div className="rating-widget">
@@ -113,7 +112,6 @@ function Detail(props) {
           </button>
         </div>
       </div>
-      <MapComponent latitude={place.latitude} longitude={place.longitude} />
     </div>
   );
 }
