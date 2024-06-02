@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, Enum
 from database import Base
 import enum
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import ARRAY
 from typing import List, Optional  # Importar List y Optional para el nuevo campo
 
@@ -27,18 +27,19 @@ class Movies(Base):
     
     movie_id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
+    genres = Column(String, index=True)
     stars = Column(String, nullable=True)
     directors = Column(String, nullable=True)
-    genres = Column(String, index=True)
 
 
 class Recommendation(Base):
-    __tablename__= 'recommendations'
+    __tablename__ = 'recommendations'
     
-    recommendation_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.user_id'))
     movie_id = Column(Integer, ForeignKey('movies.movie_id'))
-    stars = Column(Float, index=True)
+    predicted_rating = Column(Float, nullable=True)  # Ensure this is correctly named
+    movie_name = Column(String, index=True)
     
 
 class Ratings(Base):
@@ -59,20 +60,20 @@ class Tags(Base):
 
 class UserResponse(BaseModel):
     user_id: int
-    name: str
     
 class MoviesResponse(BaseModel):
     movies_id: int
     title: str
-    stars: str
-    directors: str
+    stars: Optional[str] = Field(default=None)
+    directors: Optional[str] = Field(default=None)
     genres: str
 
 class RecommendationResponse(BaseModel):
     recommendation_id: int
     user_id: str
     movie_id: str
-    stars: float
+    predicted_rating: float
+    movie_name: str
     
 class RatingsResponse(BaseModel):
     rating_id: int

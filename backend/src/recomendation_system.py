@@ -7,7 +7,7 @@ import networkx as nx
 
 modelo = load('algo_cosine_model.joblib')
 
-dataRatingsFiltered = pd.read_csv('../csv-data/dataRatingsFiltered.csv')
+dataRatingsFiltered = pd.read_csv('/backend/csv-data/dataRatingsFiltered.csv')
 reader = Reader(rating_scale=(dataRatingsFiltered['rating'].min(), dataRatingsFiltered['rating'].max()))
 data = Dataset.load_from_df(dataRatingsFiltered[['userId', 'movieId', 'rating']], reader)
 
@@ -16,7 +16,7 @@ data = Dataset.load_from_df(dataRatingsFiltered[['userId', 'movieId', 'rating']]
 # trainset = surprise_dataset.build_full_trainset()
 
 
-df_final = pd.read_csv('../csv-data/resultados_peliculas_genres.csv')
+df_final = pd.read_csv('/backend/csv-data/resultados_peliculas_genres.csv')
 # Crear un grafo para representar las relaciones ontológicas
 G = nx.Graph()
 
@@ -68,7 +68,7 @@ def calcular_similitud_ontologica_graph(movie1, movie2, graph):
 
 
 # Función de recomendación basada en filtraje ontológico con el grafo y calificación
-def recomendar_peliculas_calificadas(movie_title, df, graph, top_n=5):
+def recomendar_peliculas_calificadas(movie_title, df=df_final, graph=G, top_n=5):
     movie = df[df['film_title'] == movie_title].iloc[0]
     similarities = []
     for index, row in df.iterrows():

@@ -8,7 +8,7 @@ import uvicorn
 from pydantic import BaseModel
 from typing import List, Annotated
 import enum
-# from recomendation_system import get_recommendation, get_top_n_recommendations
+from recomendation_system import get_top_n_recommendations_model, recomendar_peliculas_calificadas
 from models import User, Recommendation, Ratings, Movies, Tags, UserResponse, MoviesResponse, RecommendationResponse, RatingsResponse, TagsResponse, UserCreate
 
 
@@ -54,24 +54,28 @@ def signup(user: UserCreate, db: db_dependency):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return UserResponse(user_id=db_user.user_id, name="Sample Name")  # Update as per your actual model fields
+    return UserResponse(user_id=db_user.user_id)  # Update as per your actual model fields
 
 
 @app.get('/logout/')
 def logout():
     return {'message': 'Logged out'}
 
-@app.get('/users/', response_model=List[models.UserResponse])
+@app.get('/users/', response_model=List[UserResponse])
 def get_users(db: db_dependency):
-    users = db.query(models.User).all()
+    users = db.query(User).all()
     return users
 
 @app.get('/users/{user_id}', response_model=models.UserResponse)
 def get_user(user_id: str, db: db_dependency):
-    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    user = db.query(User).filter(User.user_id == user_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail='User not found')
-    return user
+
+    # Make sure to return all required fields of the UserResponse model
+    return UserResponse(
+        user_id=user.user_id,
+    )
 
 
 @app.get('/recommendations/{user_id}', response_model=List[models.RecommendationResponse])
@@ -85,10 +89,19 @@ def get_recommendations(db: db_dependency):
     recommendations = db.query(models.Recommendation).all()
     return recommendations
 
-@app.get('/movies/', response_model=List[models.MoviesResponse])
-def get_movies(db: db_dependency):
-    movies = db.query(models.Movies).all()
-    return movies
+@app.get('/movies/{movies_id}', response_model=MoviesResponse)
+def get_movie(movies_id: str, db: db_dependency):
+    movie = db.query(Movies).filter(Movies.movie_id == movies_id).first()
+    if movie is None:
+        raise HTTPException(status_code=404, detail='Movie not found')
+    return MoviesResponse(
+        movies_id=movie.movie_id,
+        title=movie.title,
+        stars=movie.stars or "",
+        directors=movie.directors or "",
+        genres=movie.genres
+    )
+
 
 @app.get('/movies/{movies_id}', response_model=models.MoviesResponse)
 def movies(movie_id: str, db: db_dependency):
@@ -115,11 +128,11 @@ def get_tags(db: db_dependency):
     tags = db.query(models.Tags).all()
     return tags
 
-@app.get('/tags/{tag_id}', response_model=models.RatingsResponse)
-def get_tags(tag_id: int, db: db_dependency):
+@app.get('/tags/{tag_id}', response_model=TagsResponse)  # Corrected response_model
+def get_tag(tag_id: int, db: db_dependency):
     tag = db.query(models.Tags).filter(models.Tags.tag_id == tag_id).first()
     if tag is None:
-        raise HTTPException(status_code=404, detail='Rating not found')
+        raise HTTPException(status_code=404, detail='Tag not found')
     return tag
 
 @app.get('/ratings/user/{user_id}', response_model=List[RatingsResponse])
@@ -145,37 +158,77 @@ def get_tags_by_user(user_id: str, db: db_dependency):
     return tags
 
 @app.get('/tags/movies/{movie_id}', response_model=List[TagsResponse])
-def get_taghsby_movie(movie_id: str, db: db_dependency):
+def get_tag_sby_movie(movie_id: str, db: db_dependency):
     tags = db.query(models.Tags).filter(models.Tags.movie_id == movie_id).all()
     if not tags:
         raise HTTPException(status_code=404, detail='No tags found for this business')
     return tags
 
-# @app.get('/reviews/user/{user_id}/business/{business_id}', response_model=List[ReviewsResponse])
-# def get_reviews_by_user_and_business(user_id: str, business_id: str, db: db_dependency):
-#     reviews = db.query(models.Reviews).filter(models.Reviews.user_id == user_id, models.Reviews.business_id == business_id).all()
-#     if not reviews:
-#         raise HTTPException(status_code=404, detail='No reviews found for this user and business combination')
-#     return reviews
+@app.get('/recommendations/user/{user_id}')
+def get_top_n_recommendations(user_id: int, db: Session = Depends(get_db), top_n: int = 5):
+    # Check if user exists
+    user = get_user(user_id=user_id, db=db)
+    # if user is None:
+    #     raise HTTPException(status_code=404, detail="User not found")
 
-# @app.get('/generate_recommendation/{user_id}/{business_id}', response_model=RecommendationResponse)
-# def generate_recommendation(user_id: str, business_id: str, db: db_dependency):
-#     recommendation = get_recommendation(user_id, business_id)
-#     db_recommendation = models.Recommendation(user_id=user_id, business_id=business_id, stars=recommendation)
-#     db.add(db_recommendation)
-#     db.commit()
-#     db.refresh(db_recommendation)
-#     return db_recommendation
+    recommendations = get_top_n_recommendations_model(user_id=user_id, top_n=top_n)
+    print(recommendations)
 
-# @app.get('/generate_top_n_recommendations/{user_id}', response_model=List[RecommendationResponse])
-# def generate_top_n_recommendations(user_id: str, db: db_dependency):
-#     recommendations = get_top_n_recommendations(user_id)
-#     db_recommendations = [models.Recommendation(user_id=recommendation.user_id,
-#                                                 business_id=recommendation.business_id,
-#                                                 stars=recommendation.stars) for recommendation in recommendations]
-#     db.add_all(db_recommendations)
-#     db.commit()
-#     return db_recommendations
+    for rec in recommendations:
+        movie_id = rec[0]  # Assuming rec is a tuple with movie_id as the first element
+        predicted_rating = rec[1]  # Assuming rec is a tuple with predicted_rating as the second element
+
+        new_rec = models.Recommendation(
+            user_id=user_id,
+            movie_id=movie_id,
+            predicted_rating=predicted_rating  # Corrected field name
+        )
+        db.add(new_rec)
+    db.commit()
+
+    movie_ids = [rec[0] for rec in recommendations]  # Adjust index accordingly
+    movies = db.query(models.Movies).filter(models.Movies.movie_id.in_(movie_ids)).all()
+    movie_dict = {movie.movie_id: movie.title for movie in movies}
+
+    recommendation_responses = []
+    for rec in recommendations:
+        recommendation_responses.append({
+            "user_id": user_id,
+            "movie_id": rec[0],  # Adjust index accordingly
+            "predicted_rating": rec[1],  # Corrected field name
+            "movie_name": movie_dict.get(rec[0], "Unknown")  # Adjust index accordingly
+        })
+    return recommendation_responses
+
+
+
+@app.get('/recommendations/user/graph/{user_id}', response_model=List[models.RecommendationResponse])
+def get_top_n_recommendations_graph(user_id: int, movie_name: str, db: Session = Depends(get_db), top_n: int = 5):
+    recommendations = recomendar_peliculas_calificadas(movie_title=movie_name, user_id=user_id, top_n=top_n)
+    print(recommendations)
+
+    for rec in recommendations:
+        new_rec = models.Recommendation(
+            user_id=user_id,
+            rating=rec["predicted_rating"],
+            movie_name=rec["movie_name"],
+        )
+        db.add(new_rec)
+    db.commit()
+
+    movie_names = [rec["movie_name"] for rec in recommendations]
+    movies = db.query(models.Movies).filter(models.Movies.movie_name.in_(movie_names)).all()
+    movie_dict = {movie.movie_name: movie.movie_id for movie in movies}
+
+    recommendation_responses = []
+    for rec in recommendations:
+        recommendation_responses.append(models.RecommendationResponse(
+            user_id=user_id,
+            movie_id=movie_dict.get(rec["movie_name"], 0),
+            rating=rec["predicted_rating"],
+            movie_name=rec["movie_name"]
+        ))
+    return recommendation_responses
 
 if __name__ == '__main__':
     uvicorn.run(app, host='0.0.0.0', port=8000)
