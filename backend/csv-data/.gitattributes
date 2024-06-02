@@ -1,0 +1,7 @@
+ratings.csv filter=lfs diff=lfs merge=lfs -text
+resultados_peliculas_genres.csv filter=lfs diff=lfs merge=lfs -text
+tags.csv filter=lfs diff=lfs merge=lfs -text
+users.csv filter=lfs diff=lfs merge=lfs -text
+dataLinksFiltered.csv filter=lfs diff=lfs merge=lfs -text
+dataRatingsFiltered.csv filter=lfs diff=lfs merge=lfs -text
+movies.csv filter=lfs diff=lfs merge=lfs -text
