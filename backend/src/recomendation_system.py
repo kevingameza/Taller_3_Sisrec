@@ -86,28 +86,22 @@ def recomendar_peliculas_calificadas(movie_title, df, graph, top_n=5):
 recommendations = recomendar_peliculas_calificadas('A Quiet Place', df_final, G, 3)
 print(recommendations)
 
+def get_recommendation(movie_title: str, top_n: int = 5):
+    recommendations = recomendar_peliculas_calificadas(movie_title, df_final, G, top_n)
+    return recommendations
 
-# def get_recommendation(user_id:str, business_id:str):
-#     print('--------------------------------')
-#     predicciones_svd = modelo_svd.predict(user_id, business_id)
-#     predicciones_knn = modelo_knn.predict(user_id, business_id)
-#     promedio_est = (predicciones_svd.est + predicciones_knn.est) / 2
+def get_top_n_recommendations(user_id, top_n: int = 5):
 
-#     return promedio_est
+    user_movies = dataRatingsFiltered[dataRatingsFiltered['userId'] == user_id]['movieId'].unique()
+        # Obtener los títulos de las películas vistas por el usuario
+    user_movie_titles = df_merged[df_merged['movieId'].isin(user_movies)]['movieId']
+    # Obtener las películas que el usuario no ha visto
+    unseen_movies = [movie_id for movie_id in user_movie_titles ]
+    # Predecir las calificaciones para todas las películas no vistas
+    predictions = [modelo.predict(uid=user_id, iid=movie_id) for movie_id in unseen_movies]
+    # Ordenar las predicciones por la calificación estimada en orden descendente
+    predictions.sort(key=lambda x: x.est, reverse=True)
+    # Obtener las 10 mejores predicciones
+    top_n_predictions = predictions[:top_n]
+    return top_n_predictions
 
-# def get_top_n_recommendations(user_id: str, n: int = 10):
-#     print('--------------------------------')
-
-#     unique_businesses = df_review['business_id'].unique()
-#     predictions = []
-
-#     for business_id in unique_businesses:
-#         pred_svd = modelo_svd.predict(user_id, business_id)
-#         pred_knn = modelo_knn.predict(user_id, business_id)
-#         avg_rating = (pred_svd.est + pred_knn.est) / 2
-#         predictions.append((business_id, avg_rating))
-
-#     predictions.sort(key=lambda x: x[1], reverse=True)
-#     top_n_predictions = predictions[:n]
-
-#     return [RecommendationResponse(user_id, business_id, stars) for business_id, stars in top_n_predictions]

@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from typing import List, Annotated
 import enum
 # from recomendation_system import get_recommendation, get_top_n_recommendations
-from models import User, Recommendation, Ratings, Movies, Tags, UserResponse, MoviesResponse, RecommendationResponse, RatingsResponse, TagsResponse
+from models import User, Recommendation, Ratings, Movies, Tags, UserResponse, MoviesResponse, RecommendationResponse, RatingsResponse, TagsResponse, UserCreate
 
 
 app = FastAPI()
@@ -43,18 +43,6 @@ db_dependency = Annotated[Session, Depends(get_db)]
 def read_root():
     return {'message': 'Hello World'}
 
-
-@app.post('/signup/', response_model=UserResponse)
-def signup(user: User, db: db_dependency):
-    existing_user = db.query(models.User).filter(models.User.user_id == user.user_id).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Username already exists")
-
-    db_user = models.User(user_id=user.user_id, password=user.password)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return UserResponse(user_id=db_user.user_id)
 
 @app.post('/signup/', response_model=UserResponse)
 def signup(user: UserCreate, db: db_dependency):
