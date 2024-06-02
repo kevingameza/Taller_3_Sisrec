@@ -41,11 +41,11 @@ function Login() {
   return (
     <div className="login-container">
       <img
-        src="https://fineproxy.org/wp-content/uploads/2023/09/Yelp-for-Business-logo.png"
-        alt="Yelp Logo"
+        src="https://seeklogo.com/images/I/imdb-logo-1CD1CCD432-seeklogo.com.png"
+        alt="Imdb Logo"
         className="logo"
       />
-      <h2 style={{color: "black"}}>Login</h2>
+      <h2 style={{color: "white"}}>Login</h2>
       <form onSubmit={handleSubmit} className="login-form">
         <input
           type="user"
