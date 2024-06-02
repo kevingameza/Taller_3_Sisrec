@@ -88,7 +88,7 @@ print(recommendations)
 
 
 def get_top_n_recommendations_model(user_id, top_n: int = 5):
-
+    print('user id' +str(user_id))
     user_movies = dataRatingsFiltered[dataRatingsFiltered['userId'] == user_id]['movieId'].unique()
         # Obtener los títulos de las películas vistas por el usuario
     user_movie_titles = df_final[df_final['movieId'].isin(user_movies)]['movieId']

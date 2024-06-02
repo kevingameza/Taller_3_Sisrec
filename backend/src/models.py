@@ -70,10 +70,12 @@ class MoviesResponse(BaseModel):
 
 class RecommendationResponse(BaseModel):
     recommendation_id: int
-    user_id: str
-    movie_id: str
+    user_id: int
+    movie_id: int
     predicted_rating: float
     movie_name: str
+
+
     
 class RatingsResponse(BaseModel):
     rating_id: int

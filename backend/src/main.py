@@ -164,19 +164,19 @@ def get_tag_sby_movie(movie_id: str, db: db_dependency):
         raise HTTPException(status_code=404, detail='No tags found for this business')
     return tags
 
-@app.get('/recommendations/user/{user_id}')
+@app.get('/recommendations/user/{user_id}', response_model=List[models.RecommendationResponse])
 def get_top_n_recommendations(user_id: int, db: Session = Depends(get_db), top_n: int = 5):
-    # Check if user exists
-    user = get_user(user_id=user_id, db=db)
-    # if user is None:
+    # # Check if user exists
+    # user = db.query(User).filter(User.user_id == user_id).first()
+    # if not user:
     #     raise HTTPException(status_code=404, detail="User not found")
 
     recommendations = get_top_n_recommendations_model(user_id=user_id, top_n=top_n)
     print(recommendations)
 
     for rec in recommendations:
-        movie_id = rec[0]  # Assuming rec is a tuple with movie_id as the first element
-        predicted_rating = rec[1]  # Assuming rec is a tuple with predicted_rating as the second element
+        movie_id = rec.iid  # Assuming rec is a Prediction object with movie_id as iid
+        predicted_rating = rec.est  # Assuming rec is a Prediction object with predicted_rating as est
 
         new_rec = models.Recommendation(
             user_id=user_id,
@@ -186,19 +186,21 @@ def get_top_n_recommendations(user_id: int, db: Session = Depends(get_db), top_n
         db.add(new_rec)
     db.commit()
 
-    movie_ids = [rec[0] for rec in recommendations]  # Adjust index accordingly
+    movie_ids = [rec.iid for rec in recommendations]  # Adjust index accordingly
     movies = db.query(models.Movies).filter(models.Movies.movie_id.in_(movie_ids)).all()
     movie_dict = {movie.movie_id: movie.title for movie in movies}
 
     recommendation_responses = []
     for rec in recommendations:
-        recommendation_responses.append({
-            "user_id": user_id,
-            "movie_id": rec[0],  # Adjust index accordingly
-            "predicted_rating": rec[1],  # Corrected field name
-            "movie_name": movie_dict.get(rec[0], "Unknown")  # Adjust index accordingly
-        })
+        recommendation_responses.append(models.RecommendationResponse(
+            recommendation_id = db.query(func.max(Recommendation.id)).scalar() +1 or 0,
+            user_id=user_id,
+            movie_id=rec.iid,  # Adjust index accordingly
+            predicted_rating=rec.est,  # Corrected field name
+            movie_name=movie_dict.get(rec.iid, "Unknown")  # Adjust index accordingly
+        ))
     return recommendation_responses
+
 
 
 
