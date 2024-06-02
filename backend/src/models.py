@@ -11,7 +11,17 @@ class User(Base):
     user_id = Column(Integer, primary_key=True, index=True)
     password = Column(String)
     
+class UserCreate(BaseModel):
+    user_id: int
+    password: str
+
+class UserResponse(BaseModel):
+    user_id: int
+    name: str
     
+    class Config:
+        orm_mode = True
+
 class Movies(Base):
     __tablename__= 'movies'
     
@@ -48,7 +58,7 @@ class Tags(Base):
     tag = Column(String)
 
 class UserResponse(BaseModel):
-    user_id: str
+    user_id: int
     name: str
     
 class MoviesResponse(BaseModel):

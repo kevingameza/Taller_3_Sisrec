@@ -8,7 +8,7 @@ import uvicorn
 from pydantic import BaseModel
 from typing import List, Annotated
 import enum
-from recomendation_system import get_recommendation, get_top_n_recommendations
+# from recomendation_system import get_recommendation, get_top_n_recommendations
 from models import User, Recommendation, Ratings, Movies, Tags, UserResponse, MoviesResponse, RecommendationResponse, RatingsResponse, TagsResponse
 
 
@@ -56,15 +56,18 @@ def signup(user: User, db: db_dependency):
     db.refresh(db_user)
     return UserResponse(user_id=db_user.user_id)
 
+@app.post('/signup/', response_model=UserResponse)
+def signup(user: UserCreate, db: db_dependency):
+    existing_user = db.query(models.User).filter(models.User.user_id == user.user_id).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already exists")
 
-@app.post('/login/', response_model=models.UserResponse)
-def login(user: User, db: db_dependency):
-    db_user = db.query(models.User).filter(models.User.user_id == user.user_id).first()
-    if db_user is None:
-        raise HTTPException(status_code=404, detail='User not found')
-    if db_user.password != user.password:
-        raise HTTPException(status_code=401, detail='Invalid password')
-    return db_user
+    db_user = models.User(user_id=user.user_id, password=user.password)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return UserResponse(user_id=db_user.user_id, name="Sample Name")  # Update as per your actual model fields
+
 
 @app.get('/logout/')
 def logout():

@@ -33,3 +33,5 @@ archive.zip
 *.csv
 *.pipeline
 data
+
+backend/Python-3.10.0
