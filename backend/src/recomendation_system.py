@@ -86,15 +86,12 @@ def recomendar_peliculas_calificadas(movie_title, df, graph, top_n=5):
 recommendations = recomendar_peliculas_calificadas('A Quiet Place', df_final, G, 3)
 print(recommendations)
 
-def get_recommendation(movie_title: str, top_n: int = 5):
-    recommendations = recomendar_peliculas_calificadas(movie_title, df_final, G, top_n)
-    return recommendations
 
-def get_top_n_recommendations(user_id, top_n: int = 5):
+def get_top_n_recommendations_model(user_id, top_n: int = 5):
 
     user_movies = dataRatingsFiltered[dataRatingsFiltered['userId'] == user_id]['movieId'].unique()
         # Obtener los títulos de las películas vistas por el usuario
-    user_movie_titles = df_merged[df_merged['movieId'].isin(user_movies)]['movieId']
+    user_movie_titles = df_final[df_final['movieId'].isin(user_movies)]['movieId']
     # Obtener las películas que el usuario no ha visto
     unseen_movies = [movie_id for movie_id in user_movie_titles ]
     # Predecir las calificaciones para todas las películas no vistas
@@ -104,4 +101,5 @@ def get_top_n_recommendations(user_id, top_n: int = 5):
     # Obtener las 10 mejores predicciones
     top_n_predictions = predictions[:top_n]
     return top_n_predictions
+
 

@@ -28,7 +28,7 @@ class Movies(Base):
     movie_id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     stars = Column(String, nullable=True)
-    directors = Column(String, index=True)
+    directors = Column(String, nullable=True)
     genres = Column(String, index=True)
 
 
