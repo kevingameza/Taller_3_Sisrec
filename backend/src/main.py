@@ -56,6 +56,15 @@ def signup(user: UserCreate, db: db_dependency):
     db.refresh(db_user)
     return UserResponse(user_id=db_user.user_id)  # Update as per your actual model fields
 
+@app.post('/login/', response_model=UserResponse)
+def login(user: UserCreate, db: db_dependency):
+    db_user = db.query(models.User).filter(models.User.user_id == user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Invalid username or password")
+
+    return UserResponse(user_id=db_user.user_id)
+
+
 
 @app.get('/logout/')
 def logout():

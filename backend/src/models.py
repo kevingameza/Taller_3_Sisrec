@@ -30,6 +30,8 @@ class Movies(Base):
     genres = Column(String, index=True)
     stars = Column(String, nullable=True)
     directors = Column(String, nullable=True)
+    startYear = Column(Integer, nullable=True)
+    isAdult = Column(Boolean, nullable=True)
 
 
 class Recommendation(Base):
@@ -60,13 +62,18 @@ class Tags(Base):
 
 class UserResponse(BaseModel):
     user_id: int
-    
+
+    class Config:
+        orm_mode = True
 class MoviesResponse(BaseModel):
     movies_id: int
     title: str
     stars: Optional[str] = Field(default=None)
     directors: Optional[str] = Field(default=None)
     genres: str
+    starYear: Optional[int] = Field(default=None)
+    isAdult: Optional[bool] = Field(default=None)
+
 
 class RecommendationResponse(BaseModel):
     recommendation_id: int
