@@ -98,18 +98,21 @@ def get_recommendations(db: db_dependency):
     recommendations = db.query(models.Recommendation).all()
     return recommendations
 
-@app.get('/movies/{movies_id}', response_model=MoviesResponse)
-def get_movie(movies_id: str, db: db_dependency):
-    movie = db.query(Movies).filter(Movies.movie_id == movies_id).first()
+@app.get('/movies/{movie_id}', response_model=MoviesResponse)
+def get_movie(movie_id: int, db: db_dependency):
+    movie = db.query(Movies).filter(Movies.movie_id == movie_id).first()
     if movie is None:
         raise HTTPException(status_code=404, detail='Movie not found')
     return MoviesResponse(
-        movies_id=movie.movie_id,
+        movie_id=movie.movie_id,
         title=movie.title,
-        stars=movie.stars or "",
-        directors=movie.directors or "",
-        genres=movie.genres
+        stars=movie.stars,
+        directors=movie.directors,
+        genres=movie.genres,
+        startyear=movie.startyear,
+        isadult=movie.isadult
     )
+
 
 @app.get('/movies/', response_model=List[models.MoviesResponse])
 def get_movies(db: db_dependency):
@@ -117,7 +120,7 @@ def get_movies(db: db_dependency):
     return movies
 
 
-# @app.get('/movies/{movies_id}', response_model=models.MoviesResponse)
+# @app.get('/movies/{movie_id}', response_model=models.MoviesResponse)
 # def movies(movie_id: str, db: db_dependency):
 #     movie = db.query(models.Business).filter(models.Movies.movie_id == movie_id).first()
 #     if movie is None:
