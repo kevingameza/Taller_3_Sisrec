@@ -1,16 +1,14 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, Enum
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float
 from database import Base
-import enum
 from pydantic import BaseModel, Field
-from sqlalchemy import ARRAY
-from typing import List, Optional  # Importar List y Optional para el nuevo campo
+from typing import Optional
 
 class User(Base):
-    __tablename__= 'users'
+    __tablename__ = 'users'
     
     user_id = Column(Integer, primary_key=True, index=True)
     password = Column(String)
-    
+
 class UserCreate(BaseModel):
     user_id: int
     password: str
@@ -23,7 +21,7 @@ class UserResponse(BaseModel):
         orm_mode = True
 
 class Movies(Base):
-    __tablename__= 'movies'
+    __tablename__ = 'movies'
     
     movie_id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
@@ -33,19 +31,17 @@ class Movies(Base):
     startYear = Column(Integer, nullable=True)
     isAdult = Column(Boolean, nullable=True)
 
-
 class Recommendation(Base):
     __tablename__ = 'recommendations'
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.user_id'))
     movie_id = Column(Integer, ForeignKey('movies.movie_id'))
-    predicted_rating = Column(Float, nullable=True)  # Ensure this is correctly named
+    predicted_rating = Column(Float, nullable=True)
     movie_name = Column(String, index=True)
-    
 
 class Ratings(Base):
-    __tablename__= 'ratings'
+    __tablename__ = 'ratings'
 
     rating_id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.user_id'))
@@ -65,15 +61,15 @@ class UserResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
 class MoviesResponse(BaseModel):
-    movies_id: int
+    movie_id: int
     title: str
     stars: Optional[str] = Field(default=None)
     directors: Optional[str] = Field(default=None)
     genres: str
-    starYear: Optional[int] = Field(default=None)
+    startYear: Optional[int] = Field(default=None)
     isAdult: Optional[bool] = Field(default=None)
-
 
 class RecommendationResponse(BaseModel):
     recommendation_id: int
@@ -82,8 +78,6 @@ class RecommendationResponse(BaseModel):
     predicted_rating: float
     movie_name: str
 
-
-    
 class RatingsResponse(BaseModel):
     rating_id: int
     user_id: int
