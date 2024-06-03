@@ -1,50 +1,139 @@
 import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useParams } from "react-router-dom"; // Importar useParams
+import { useParams, Link } from "react-router-dom";
+import { faThumbsUp, faThumbsDown } from "@fortawesome/free-solid-svg-icons";
+import axios from "axios";
 
-import { faThumbsUp, faThumbsDown } from "@fortawesome/free-solid-svg-icons"; // Import specific icons
-
-import "./Detail.css"; // Import your styling
+import "./Detail.css";
 import "../App.css";
 
+const TMDB_API_KEY = "e9b4d5daf252366da95083e70569592e";
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
+const TMDB_LOGO_BASE_URL = "https://image.tmdb.org/t/p/original"; // Base URL for provider logos
+
 function Detail(props) {
-  const [movie, setPlace] = useState(null);
-  const [selectedRating, setSelectedRating] = useState(null); // Track selected rating
-  const { placeId } = useParams();
+  const userId = localStorage.getItem("userId"); // Get user ID from local storage
+  const [movie, setMovie] = useState(null);
+  const [recommendedMovies, setRecommendedMovies] = useState(null);
+  const [selectedRating, setSelectedRating] = useState(null);
+  const [streamingProviders, setStreamingProviders] = useState([]);
+  const { movieId } = useParams();
 
   useEffect(() => {
-    const fetchRecommendations = async () => {
+    const fetchMovieDetails = async () => {
       try {
-        const placeResponse = await fetch(
-          `http://127.0.0.1:8000/movies/${placeId}`
-        );
-        if (!placeResponse.ok) {
+        const response = await fetch(`http://127.0.0.1:8000/movies/${movieId}`);
+        if (!response.ok) {
           throw new Error("Failed to fetch movie details");
         }
-        const placeDetails = await placeResponse.json();
-        setPlace(placeDetails); // Aquí es donde deberíamos usar la variable correcta
+        const movieDetails = await response.json();
+
+        // Fetch poster from TMDb
+        const tmdbResponse = await axios.get(`${TMDB_BASE_URL}/search/movie`, {
+          params: {
+            api_key: TMDB_API_KEY,
+            query: movieDetails.title.replaceAll("_", " "),
+            year: movieDetails.year,
+          },
+        });
+        const tmdbMovie = tmdbResponse.data.results[0];
+        const posterUrl = tmdbMovie
+          ? `${TMDB_IMAGE_BASE_URL}${tmdbMovie.poster_path}`
+          : null;
+
+        setMovie({ ...movieDetails, poster_url: posterUrl });
+
+        // Fetch streaming providers
+        if (tmdbMovie) {
+          const providersResponse = await axios.get(
+            `${TMDB_BASE_URL}/movie/${tmdbMovie.id}/watch/providers`,
+            {
+              params: { api_key: TMDB_API_KEY },
+            }
+          );
+          const providers = providersResponse.data.results.CO?.flatrate || [];
+          setStreamingProviders(providers);
+        }
       } catch (error) {
-        console.error("Error fetching recommendations:", error);
-        // Handle errors (display an error message to the user)
+        console.error("Error fetching movie details:", error);
       }
     };
 
-    fetchRecommendations();
-  }, [placeId]); // Re-run useEffect when userId changes
+    fetchMovieDetails();
+  }, [movieId]);
 
-  const handleRateSong = async (rating) => {
+  useEffect(() => {
+    if (userId) {
+      const fetchRecommendedMovies = async () => {
+        setRecommendedMovies(null);
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8000/recommendations/user/graph/${userId}/?movie_name=${movie.title.replaceAll(
+              "_",
+              " "
+            )}`
+          );
+          if (!response.ok) {
+            throw new Error("Failed to fetch recommendations");
+          }
+          const recommendations = await response.json();
+
+          const moviesWithDetails = await Promise.all(
+            recommendations.slice(0, 5).map(async (recommendation) => {
+              const movieResponse = await fetch(
+                `http://127.0.0.1:8000/movies/${recommendation.movie_id}`
+              );
+              if (!movieResponse.ok) {
+                throw new Error("Failed to fetch movie details");
+              }
+              const movieDetails = await movieResponse.json();
+
+              const tmdbResponse = await axios.get(
+                `${TMDB_BASE_URL}/search/movie`,
+                {
+                  params: {
+                    api_key: TMDB_API_KEY,
+                    query: movieDetails.title,
+                    year: movieDetails.year,
+                  },
+                }
+              );
+              const tmdbMovie = tmdbResponse.data.results[0];
+              const posterUrl = tmdbMovie
+                ? `${TMDB_IMAGE_BASE_URL}${tmdbMovie.poster_path}`
+                : null;
+
+              return {
+                ...recommendation,
+                ...movieDetails,
+                poster_url: posterUrl,
+              };
+            })
+          );
+          setRecommendedMovies(moviesWithDetails);
+        } catch (error) {
+          console.error("Error fetching recommendations:", error);
+        }
+      };
+
+      fetchRecommendedMovies();
+    }
+  }, [userId, movie]);
+
+  const handleRateMovie = async (rating) => {
     setSelectedRating(rating === selectedRating ? null : rating); // Toggle rating
 
     if (!movie || !movie.id) {
       console.error(
         "Missing movie data or ID to update recommendation status."
       );
-      return; // Prevent sending request without movie information
+      return;
     }
 
     if (rating === null) {
       console.error("Missing rating.");
-      return; // Prevent sending request without rating information
+      return;
     }
 
     const response = await fetch(
@@ -54,19 +143,17 @@ function Detail(props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: rating === "thumbsDown" ? "negative" : "positive",
-        }), // Send the updated status
+        }),
       }
     );
 
     if (!response.ok) {
       console.error(
-        `Error updating recommendation status for song ${movie.id}:`,
+        `Error updating recommendation status for movie ${movie.id}:`,
         await response.text()
       );
     } else {
       console.log(`Recommendation status updated for movie ${movie.id}`);
-      // Optionally, update the movie state locally if successful
-      // setplace({ ...movie, status: rating }); // Update movie status in state
     }
   };
 
@@ -76,42 +163,100 @@ function Detail(props) {
 
   return (
     <div className="detail-view">
+      <div className="top-bar">
+        <Link to="/home" className="home-button">
+          <button type="button" className="btn">
+            Home
+          </button>
+        </Link>
+      </div>
       <img
         src="https://seeklogo.com/images/I/imdb-logo-1CD1CCD432-seeklogo.com.png"
         alt="Imdb Logo"
         className="logo"
       />
       <div className="info-container">
-        <h1>{movie.name}</h1>
-        <h2>{movie.address}</h2>
-        <h3>Expected rating: {movie.stars}</h3>
-
-        {/* Rating Widget */}
-        <div className="rating-widget">
-          <button
-            type="button"
-            className={`thumbs-up ${
-              selectedRating === "thumbsUp" ? "selected" : ""
-            }`}
-            onClick={() => handleRateSong("thumbsUp")}
-          >
-            <i className="fas fa-thumbs-up">
+        <img
+          src={movie.poster_url}
+          alt={`${movie.title} Poster`}
+          className="movie-poster"
+        />
+        <div className="movie-details">
+          <h1>{movie.title.replaceAll("_", " ")}</h1>
+          {movie.year && <h3>Year: {movie.year}</h3>}
+          {movie.isAdult !== null && (
+            <p>{movie.isAdult ? "Adults Only" : "All Ages"}</p>
+          )}
+          <h2>Genre:</h2>
+          <ul>
+            {movie.genres.split("|").map((genre, index) => (
+              <li key={index}>{genre}</li>
+            ))}
+          </ul>
+          <div className="rating-widget">
+            <button
+              type="button"
+              className={`thumbs-up ${
+                selectedRating === "thumbsUp" ? "selected" : ""
+              }`}
+              onClick={() => handleRateMovie("thumbsUp")}
+            >
               <FontAwesomeIcon icon={faThumbsUp} />
-            </i>
-          </button>
-          <button
-            type="button"
-            className={`thumbs-down ${
-              selectedRating === "thumbsDown" ? "selected" : ""
-            }`}
-            onClick={() => handleRateSong("thumbsDown")}
-          >
-            <i className="fas fa-thumbs-down">
-              <FontAwesomeIcon icon={faThumbsDown} />{" "}
-            </i>
-          </button>
+            </button>
+            <button
+              type="button"
+              className={`thumbs-down ${
+                selectedRating === "thumbsDown" ? "selected" : ""
+              }`}
+              onClick={() => handleRateMovie("thumbsDown")}
+            >
+              <FontAwesomeIcon icon={faThumbsDown} />
+            </button>
+          </div>
+          <div className="streaming-providers">
+            <h2>Available to stream in Colombia:</h2>
+            {streamingProviders.length > 0 ? (
+              <div className="provider-logos">
+                {streamingProviders.map((provider, index) => (
+                  <img
+                    key={index}
+                    src={`${TMDB_LOGO_BASE_URL}${provider.logo_path}`}
+                    alt={provider.provider_name}
+                    className="provider-logo"
+                  />
+                ))}
+              </div>
+            ) : (
+              <p>No streaming providers available</p>
+            )}
+          </div>
         </div>
       </div>
+      {recommendedMovies ? (
+        <div className="recommended-movies">
+          <h2>Similar Movies</h2>
+          <div className="movie-grid">
+            {recommendedMovies.map((movie) => (
+              <div className="movie-card" key={movie.movie_id}>
+              <img
+                src={movie.poster_url}
+                alt={`${movie.title} Poster`}
+                className="movie-poster"
+              />
+              <div className="movie-info">
+                <h3>{movie.title.replaceAll('_',' ')}</h3>
+                <p>{movie.startyear}</p>
+                <Link to={`/movies/${movie.movie_id}`} className="movie-link">
+                  <button type="button" className="btn">
+                    See More
+                  </button>
+                </Link>
+              </div>
+            </div>
+            ))}
+          </div>
+        </div>
+      ):<div className="detail-view">Loading similar movies...</div>}
     </div>
   );
 }

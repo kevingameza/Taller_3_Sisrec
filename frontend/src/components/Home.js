@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+
 import "./Home.css";
 import "../App.css";
 
@@ -7,27 +9,22 @@ function Home() {
   const [recommendedMovies, setRecommendedMovies] = useState(null);
   const userId = localStorage.getItem("userId"); // Get user ID from local storage
 
+  const TMDB_API_KEY = "e9b4d5daf252366da95083e70569592e";
+  const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+  const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
+
   useEffect(() => {
     if (userId) {
       const fetchRecommendations = async () => {
         try {
           const response = await fetch(
-            `http://127.0.0.1:8000/recommendations/${userId}/`
+            `http://127.0.0.1:8000/recommendations/user/${userId}/`
           );
           if (!response.ok) {
             throw new Error("Failed to fetch recommendations");
           }
           let recommendations = await response.json();
 
-          if (recommendations.length === 0) {
-            const response = await fetch(
-              `http://127.0.0.1:8000/generate_top_n_recommendations/${userId}/`
-            );
-            if (!response.ok) {
-              throw new Error("Failed to fetch recommendations");
-            }
-            recommendations = await response.json();
-          }
           // Fetch additional information for each song
           const moviesWithDetails = await Promise.all(
             recommendations.map(async (recomendation) => {
@@ -37,10 +34,31 @@ function Home() {
               if (!moviesResponse.ok) {
                 throw new Error("Failed to fetch movie details");
               }
-              const placeDetails = await moviesResponse.json();
-              return { ...recomendation, title: placeDetails.name }; // Combine the recommendation and detailed information
+              const movieDetails = await moviesResponse.json();
+              // Fetch poster from TMDb
+              const tmdbResponse = await axios.get(
+                `${TMDB_BASE_URL}/search/movie`,
+                {
+                  params: {
+                    api_key: TMDB_API_KEY,
+                    query: movieDetails.title.replaceAll('_',' '),
+                    year: movieDetails.year,
+                  },
+                }
+              );
+              const tmdbMovie = tmdbResponse.data.results[0];
+              const posterUrl = tmdbMovie
+                ? `${TMDB_IMAGE_BASE_URL}${tmdbMovie.poster_path}`
+                : null;
+
+              return {
+                ...recomendation,
+                ...movieDetails,
+                poster_url: posterUrl,
+              };
             })
           );
+          setRecommendedMovies(null);
           setRecommendedMovies(moviesWithDetails); // Aquí es donde deberíamos usar la variable correcta
         } catch (error) {
           console.error("Error fetching recommendations:", error);
@@ -66,18 +84,21 @@ function Home() {
       <h1>Recommended Movies</h1>
       <div className="movie-grid">
         {recommendedMovies.map((movie) => (
-          <div className="movie-card">
-            <h3>{movie.title}</h3>
-
-            <Link
-              to={`/movies/${movie.movie_id}`}
-              key={movie.movie_id}
-              className="movie-link"
-            >
-              <button type="submit" className="btn">
-                See More
-              </button>
-            </Link>
+          <div className="movie-card" key={movie.movie_id}>
+            <img
+              src={movie.poster_url}
+              alt={`${movie.title} Poster`}
+              className="movie-poster"
+            />
+            <div className="movie-info">
+              <h3>{movie.title.replaceAll('_',' ')}</h3>
+              <p>{movie.startyear}</p>
+              <Link to={`/movies/${movie.movie_id}`} className="movie-link">
+                <button type="button" className="btn">
+                  See More
+                </button>
+              </Link>
+            </div>
           </div>
         ))}
       </div>

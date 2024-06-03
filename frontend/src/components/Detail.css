@@ -1,61 +1,115 @@
 .detail-view {
-  background-color: #ffffff;
+  background-color: #121212;
   color: #fff;
-  text-align: center;
-  padding: 50px;
+  padding: 20px;
   font-family: sans-serif;
+  text-align: center;
   min-height: 100vh;
-  justify-content: center;
+  display: flex;
+  flex-direction: column;
   align-items: center;
 }
 
+.top-bar {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.home-button {
+  margin-right: auto;
+}
+
+.logo {
+  width: 200px;
+  margin: 20px auto;
+}
+
 .info-container {
-  flex: 1; /* Take up remaining space */
+  display: flex;
+  align-items: flex-start;
+  padding: 20px;
+  justify-content: center;
 }
 
-.info-container{
-  margin-bottom: 10px;
-  color: black;
+.movie-poster {
+  width: 300px;
+  height: 450px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-right: 20px;
 }
 
-.info-container p {
-  margin-bottom: 15px;
+.movie-details {
+  text-align: left;
+  max-width: 500px;
+}
+
+.movie-details h1 {
+  margin-top: 0;
 }
 
 .rating-widget {
-  margin-top: 10px; /* Add some space above the rating widget */
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-.rating-widget button {
-  border: none; /* Remove default button borders */
-  background-color: transparent; /* Transparent background */
-  cursor: pointer; /* Indicate clickable buttons */
-  margin-right: 10px; /* Add spacing between buttons */
-  font-size: 1.5rem; /* Adjust button text size (optional) */
+.thumbs-up,
+.thumbs-down {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  color: #fff;
 }
 
-.rating-widget button.thumbs-up.selected {
-  color: green; /* Green color for selected thumbs up */
+.thumbs-up.selected,
+.thumbs-down.selected {
+  color: #007bff;
 }
 
-.rating-widget button.thumbs-down.selected {
-  color: red; /* Red color for selected thumbs down */
+.streaming-providers {
+  margin-top: 20px;
 }
 
-.rating-widget button i {
-  font-size: 2rem; /* Adjust icon size */
+.provider-logos {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-/* Always set the map height explicitly to define the size of the div
- * element that contains the map. */
- gmp-map {
-  height: 100%;
+.provider-logo {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
 }
 
-/* Optional: Makes the sample page fill the window. */
-html,
-body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+.recommended-movies {
+  width: 100%;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.movie-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.movie-card {
+  width: 200px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.movie-card img {
+  width: 100%;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.movie-info {
+  margin-top: 10px;
 }

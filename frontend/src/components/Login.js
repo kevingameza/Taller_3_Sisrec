@@ -1,6 +1,6 @@
 // Login.js
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from 'react-router-dom';
 import "./Login.css";
 import "../App.css";
 
@@ -57,7 +57,14 @@ function Login() {
         <button type="submit" className="btn">
           Login
         </button>
+
       </form>
+      <p>
+        Don't have an account?{" "}
+        <Link to="/register" className="btn">
+          Register
+        </Link>
+      </p>
     </div>
   );
 }
