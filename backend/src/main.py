@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import sessionLocal, engine
@@ -102,13 +102,18 @@ def get_movie(movies_id: str, db: db_dependency):
         genres=movie.genres
     )
 
+@app.get('/movies/', response_model=List[models.MoviesResponse])
+def get_movies(db: db_dependency):
+    movies = db.query(models.Movies).all()
+    return movies
 
-@app.get('/movies/{movies_id}', response_model=models.MoviesResponse)
-def movies(movie_id: str, db: db_dependency):
-    movie = db.query(models.Business).filter(models.Movies.movie_id == movie_id).first()
-    if movie is None:
-        raise HTTPException(status_code=404, detail='Movie not found')
-    return movie
+
+# @app.get('/movies/{movies_id}', response_model=models.MoviesResponse)
+# def movies(movie_id: str, db: db_dependency):
+#     movie = db.query(models.Business).filter(models.Movies.movie_id == movie_id).first()
+#     if movie is None:
+#         raise HTTPException(status_code=404, detail='Movie not found')
+#     return movie
 
 @app.get('/ratings/', response_model=List[models.RatingsResponse])
 def get_ratings(db: db_dependency):
@@ -203,33 +208,30 @@ def get_top_n_recommendations(user_id: int, db: Session = Depends(get_db), top_n
 
 
 
-
-@app.get('/recommendations/user/graph/{user_id}', response_model=List[models.RecommendationResponse])
-def get_top_n_recommendations_graph(user_id: int, movie_name: str, db: Session = Depends(get_db), top_n: int = 5):
-    recommendations = recomendar_peliculas_calificadas(movie_title=movie_name, user_id=user_id, top_n=top_n)
-    print(recommendations)
-
-    for rec in recommendations:
-        new_rec = models.Recommendation(
-            user_id=user_id,
-            rating=rec["predicted_rating"],
-            movie_name=rec["movie_name"],
-        )
-        db.add(new_rec)
-    db.commit()
-
-    movie_names = [rec["movie_name"] for rec in recommendations]
-    movies = db.query(models.Movies).filter(models.Movies.movie_name.in_(movie_names)).all()
-    movie_dict = {movie.movie_name: movie.movie_id for movie in movies}
+@app.get('/recommendations/user/graph/{user_id}/', response_model=List[models.RecommendationResponse])
+def get_top_n_recommendations_graph(user_id: int, movie_name: str = Query(...), db: Session = Depends(get_db), top_n: int = 5):
+    print('sdaasd ' + movie_name)
+    try:
+        recommendations = recomendar_peliculas_calificadas(movie_name, top_n)
+    except KeyError:
+        raise HTTPException(status_code=404, detail='Movie not found in recommendation graph')
 
     recommendation_responses = []
-    for rec in recommendations:
+    for movie, rating in recommendations:
+        movie_record = db.query(models.Movies).filter(models.Movies.title == movie).first()
+        if not movie_record:
+            continue
         recommendation_responses.append(models.RecommendationResponse(
+            recommendation_id=(db.query(func.max(models.Recommendation.id)).scalar() or 0) + 1,
             user_id=user_id,
-            movie_id=movie_dict.get(rec["movie_name"], 0),
-            rating=rec["predicted_rating"],
-            movie_name=rec["movie_name"]
+            movie_id=movie_record.movie_id,
+            predicted_rating=rating,
+            movie_name=movie
         ))
+
+    if not recommendation_responses:
+        raise HTTPException(status_code=404, detail='No recommendations found for this movie')
+
     return recommendation_responses
 
 if __name__ == '__main__':

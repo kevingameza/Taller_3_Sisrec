@@ -68,26 +68,25 @@ def calcular_similitud_ontologica_graph(movie1, movie2, graph):
 
 
 # Función de recomendación basada en filtraje ontológico con el grafo y calificación
-def recomendar_peliculas_calificadas(movie_title, df=df_final, graph=G, top_n=5):
-    movie = df[df['film_title'] == movie_title].iloc[0]
+def recomendar_peliculas_calificadas(movie_title, top_n=5):
+    movie = df_final[df_final['film_title'] == movie_title].iloc[0]
     similarities = []
-    for index, row in df.iterrows():
+    for index, row in df_final.iterrows():
         if row['film_title'] != movie_title:
-            similarity = calcular_similitud_ontologica_graph(movie, row, graph)
+            similarity = calcular_similitud_ontologica_graph(movie, row, G)
             # Asignar una puntuación basada en la inversa de la similitud
             score = (1 / (similarity + 1))*5  # Añadimos 1 para evitar divisiones por cero
             similarities.append((row['film_title'], similarity, score))
 
     similarities = sorted(similarities, key=lambda x: x[2], reverse=True)  # Ordenar por puntuación descendente
     recommendations = [(title, score) for title, _, score in similarities[:top_n]]
+    print(recommendations)
     return recommendations
 
-# Probar la función de recomendación calificada
-recommendations = recomendar_peliculas_calificadas('A Quiet Place', df_final, G, 3)
-print(recommendations)
 
 
-def get_top_n_recommendations_model(user_id, top_n: int = 5):
+
+def get_top_n_recommendations_model(user_id, top_n: int = 10):
     print('user id' +str(user_id))
     user_movies = dataRatingsFiltered[dataRatingsFiltered['userId'] == user_id]['movieId'].unique()
         # Obtener los títulos de las películas vistas por el usuario
