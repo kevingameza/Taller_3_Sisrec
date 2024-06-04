@@ -66,6 +66,26 @@ def calcular_similitud_ontologica_graph(movie1, movie2, graph):
 
     return min(shortest_paths, default=float('inf'))
 
+def get_most_popular_movies(top_n: int = 10):
+    # Calcular el rating promedio para cada película
+    movie_ratings_mean = dataRatingsFiltered.groupby('movieId')['rating'].mean().reset_index(name='average_rating')
+    # Calcular la cantidad de calificaciones para cada película
+    movie_ratings_count = dataRatingsFiltered.groupby('movieId').size().reset_index(name='ratings_count')
+    # Combinar los datos de rating promedio y cantidad de calificaciones
+    popular_movies = pd.merge(movie_ratings_mean, movie_ratings_count, on='movieId')
+    # Filtrar el DataFrame de películas para obtener los detalles de las películas más populares
+    popular_movies_details = df_final[df_final['movieId'].isin(popular_movies['movieId'])]
+    # Combinar los datos de popular_movies con popular_movies_details
+    popular_movies_details = pd.merge(popular_movies_details, popular_movies, on='movieId')
+    # Ordenar las películas por su cantidad de calificaciones en orden descendente
+    popular_movies_details = popular_movies_details.sort_values(by='ratings_count', ascending=False)
+    # Convertir las películas en el formato especificado
+    recommendations = []
+    for _, row in popular_movies_details.head(top_n).iterrows():
+        recommendation = Prediction(uid=2, iid=row['movieId'], r_ui=None, est=row['average_rating'], details={'actual_k': row['ratings_count'], 'was_impossible': False})
+        recommendations.append(recommendation)
+    return recommendations
+
 
 # Función de recomendación basada en filtraje ontológico con el grafo y calificación
 def recomendar_peliculas_calificadas(movie_title, top_n=5):
@@ -84,21 +104,23 @@ def recomendar_peliculas_calificadas(movie_title, top_n=5):
     return recommendations
 
 
-
-
 def get_top_n_recommendations_model(user_id, top_n: int = 10):
-    print('user id' +str(user_id))
     user_movies = dataRatingsFiltered[dataRatingsFiltered['userId'] == user_id]['movieId'].unique()
+    if len(user_movies) == 0:  # Usuario nuevo
+        return get_most_popular_movies(top_n)
+    else:
+        # Continuar con la recomendación basada en el modelo
         # Obtener los títulos de las películas vistas por el usuario
-    user_movie_titles = df_final[df_final['movieId'].isin(user_movies)]['movieId']
-    # Obtener las películas que el usuario no ha visto
-    unseen_movies = [movie_id for movie_id in user_movie_titles ]
-    # Predecir las calificaciones para todas las películas no vistas
-    predictions = [modelo.predict(uid=user_id, iid=movie_id) for movie_id in unseen_movies]
-    # Ordenar las predicciones por la calificación estimada en orden descendente
-    predictions.sort(key=lambda x: x.est, reverse=True)
-    # Obtener las 10 mejores predicciones
-    top_n_predictions = predictions[:top_n]
-    return top_n_predictions
+        user_movie_titles = df_final[df_final['movieId'].isin(user_movies)]['movieId']
+        # Obtener las películas que el usuario no ha visto
+        unseen_movies = [movie_id for movie_id in user_movie_titles ]
+        # Predecir las calificaciones para todas las películas no vistas
+        predictions = [modelo.predict(uid=user_id, iid=movie_id) for movie_id in unseen_movies]
+        # Ordenar las predicciones por la calificación estimada en orden descendente
+        predictions.sort(key=lambda x: x.est, reverse=True)
+        # Obtener las 10 mejores predicciones
+        top_n_predictions = predictions[:top_n]
+        return top_n_predictions
+
 
 
