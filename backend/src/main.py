@@ -223,7 +223,6 @@ def get_top_n_recommendations(user_id: int, db: Session = Depends(get_db), top_n
 
 @app.get('/recommendations/user/graph/{user_id}/', response_model=List[models.RecommendationResponse])
 def get_top_n_recommendations_graph(user_id: int, movie_name: str = Query(...), db: Session = Depends(get_db), top_n: int = 5):
-    print('sdaasd ' + movie_name)
     try:
         recommendations = recomendar_peliculas_calificadas(movie_name, top_n)
     except KeyError:
@@ -231,7 +230,7 @@ def get_top_n_recommendations_graph(user_id: int, movie_name: str = Query(...), 
 
     recommendation_responses = []
     for movie, rating in recommendations:
-        movie_record = db.query(models.Movies).filter(models.Movies.title == movie).first()
+        movie_record = db.query(models.Movies).filter(models.Movies.title == movie.replace(' ','_')).first()
         if not movie_record:
             continue
         recommendation_responses.append(models.RecommendationResponse(
